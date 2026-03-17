@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: STAGE
-      # Environment-scoped secrets are resolved from the "stg" environment.
-      # Example: secrets.DEPLOY_TOKEN here comes from Environment: stg.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,10 +28,8 @@ jobs:
           # npm run build
 
       - name: Deploy to STG (placeholder)
-        env:
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          echo "Deploying to STG with environment-specific secret"
+          echo "Deploying to STG"
           bash ./scripts/deploy.sh stg
 
   deploy-prod:
@@ -51,7 +47,6 @@ jobs:
       # Repository Settings -> Environments -> prod -> Protection rules -> Required reviewers.
       # GitHub will pause this job here and request approval before steps execute.
       # Approval is completed in the workflow run UI ("Review deployments" for prod).
-      # Environment-scoped secrets below are resolved from Environment: prod.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,8 +57,6 @@ jobs:
           # Replace with real commands.
 
       - name: Deploy to PROD (placeholder)
-        env:
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          echo "Deploying to PROD with environment-specific secret"
+          echo "Deploying to PROD"
           bash ./scripts/deploy.sh prod
