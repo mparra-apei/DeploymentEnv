@@ -34,7 +34,7 @@ jobs:
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           echo "Deploying to STG with environment-specific secret"
-          ./scripts/deploy.sh stg
+          bash ./scripts/deploy.sh stg
 
   deploy-prod:
     name: Deploy to PROD
@@ -66,4 +66,4 @@ jobs:
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           echo "Deploying to PROD with environment-specific secret"
-          ./scripts/deploy.sh prod
+          bash ./scripts/deploy.sh prod
