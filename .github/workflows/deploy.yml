@@ -14,7 +14,7 @@ jobs:
     name: Deploy to STG
     runs-on: ubuntu-latest
     environment:
-      name: stg
+      name: STAGE
       # Environment-scoped secrets are resolved from the "stg" environment.
       # Example: secrets.DEPLOY_TOKEN here comes from Environment: stg.
     steps:
@@ -45,7 +45,7 @@ jobs:
       group: prod
       cancel-in-progress: false
     environment:
-      name: prod
+      name: PROD
       # IMPORTANT:
       # Configure required reviewers in:
       # Repository Settings -> Environments -> prod -> Protection rules -> Required reviewers.
