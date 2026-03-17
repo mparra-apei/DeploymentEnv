@@ -1,0 +1,5 @@
+{
+  "appName": "deployment-env",
+  "artifact": "build/package.zip",
+  "targetRegion": "us-east-1"
+}
