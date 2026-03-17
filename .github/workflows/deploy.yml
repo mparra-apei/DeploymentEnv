@@ -1,0 +1,69 @@
+name: Deploy Pipeline (stg -> prod)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-stg:
+    name: Deploy to STG
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+      # Environment-scoped secrets are resolved from the "stg" environment.
+      # Example: secrets.DEPLOY_TOKEN here comes from Environment: stg.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build/Test (placeholder)
+        run: |
+          echo "Running build and tests..."
+          # Replace with real commands, e.g.:
+          # npm ci
+          # npm test
+          # npm run build
+
+      - name: Deploy to STG (placeholder)
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "Deploying to STG with environment-specific secret"
+          ./scripts/deploy.sh stg
+
+  deploy-prod:
+    name: Deploy to PROD
+    runs-on: ubuntu-latest
+    needs: deploy-stg
+    # Ensures only one production deployment runs at a time.
+    concurrency:
+      group: prod
+      cancel-in-progress: false
+    environment:
+      name: prod
+      # IMPORTANT:
+      # Configure required reviewers in:
+      # Repository Settings -> Environments -> prod -> Protection rules -> Required reviewers.
+      # GitHub will pause this job here and request approval before steps execute.
+      # Approval is completed in the workflow run UI ("Review deployments" for prod).
+      # Environment-scoped secrets below are resolved from Environment: prod.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build/Test (placeholder)
+        run: |
+          echo "Running build and tests..."
+          # Replace with real commands.
+
+      - name: Deploy to PROD (placeholder)
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "Deploying to PROD with environment-specific secret"
+          ./scripts/deploy.sh prod
