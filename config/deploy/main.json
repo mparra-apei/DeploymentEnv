@@ -1,5 +1,5 @@
 {
-  "appName": "deployment-env",
-  "artifact": "build/package.zip",
+  "appName": "abc123",
+  "artifact": "stg, devp",
   "targetRegion": "us-east-1"
 }
