@@ -1,4 +1,4 @@
-name: Deploy Pipeline (Config Driven)
+name: Deploy Pipeline (config/deploy/main.json)
 
 on:
   workflow_dispatch:
@@ -8,11 +8,6 @@ on:
         required: false
         default: "config/deploy/main.json"
         type: string
-      environment_selector:
-        description: "Use 'all' or a comma-separated list (for example: STAGE,PROD)."
-        required: false
-        default: "all"
-        type: string
   push:
     branches:
       - main
@@ -21,12 +16,13 @@ permissions:
   contents: read
 
 jobs:
-  deploy-from-config:
-    name: Deploy from main.json
+  deploy-stage:
+    name: Deploy to STAGE
     runs-on: ubuntu-latest
     env:
       DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
-      ENV_SELECTOR: ${{ github.event_name == 'workflow_dispatch' && inputs.environment_selector || 'all' }}
+    environment:
+      name: STAGE
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,18 +35,105 @@ jobs:
             exit 1
           fi
           jq empty "${DEPLOY_CONFIG_FILE}"
-          echo "Configured environments in order:"
-          jq -r '.environments // [] | .[]' "${DEPLOY_CONFIG_FILE}"
 
       - name: Build/Test (placeholder)
         run: |
           echo "Running build and tests..."
           # Replace with real commands.
 
-      - name: Deploy using config order
+      - name: Deploy to STAGE
         run: |
-          echo "Deploy selector: ${ENV_SELECTOR}"
-          echo "Config file path: ${DEPLOY_CONFIG_FILE}"
-          echo "Current directory: $(pwd)"
-          echo "Files in scripts/: $(ls -la ./scripts/ || echo 'scripts/ not found')"
-          bash -x ./scripts/deploy.sh "${ENV_SELECTOR}" "${DEPLOY_CONFIG_FILE}"
+          bash ./scripts/deploy.sh STAGE "${DEPLOY_CONFIG_FILE}"
+
+  deploy-opsfix:
+    name: Deploy to OPSFIX
+    runs-on: ubuntu-latest
+    needs: deploy-stage
+    env:
+      DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
+    environment:
+      name: OPSFIX
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment config
+        run: |
+          echo "Using deploy config: ${DEPLOY_CONFIG_FILE}"
+          if [[ ! -f "${DEPLOY_CONFIG_FILE}" ]]; then
+            echo "Config file not found: ${DEPLOY_CONFIG_FILE}"
+            exit 1
+          fi
+          jq empty "${DEPLOY_CONFIG_FILE}"
+
+      - name: Build/Test (placeholder)
+        run: |
+          echo "Running build and tests..."
+          # Replace with real commands.
+
+      - name: Deploy to OPSFIX
+        run: |
+          bash ./scripts/deploy.sh OPSFIX "${DEPLOY_CONFIG_FILE}"
+
+  deploy-prod-gateway:
+    name: Deploy to PROD_GATEWAY
+    runs-on: ubuntu-latest
+    needs: deploy-opsfix
+    env:
+      DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
+    environment:
+      name: PROD_GATEWAY
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment config
+        run: |
+          echo "Using deploy config: ${DEPLOY_CONFIG_FILE}"
+          if [[ ! -f "${DEPLOY_CONFIG_FILE}" ]]; then
+            echo "Config file not found: ${DEPLOY_CONFIG_FILE}"
+            exit 1
+          fi
+          jq empty "${DEPLOY_CONFIG_FILE}"
+
+      - name: Build/Test (placeholder)
+        run: |
+          echo "Running build and tests..."
+          # Replace with real commands.
+
+      - name: Deploy to PROD_GATEWAY
+        run: |
+          bash ./scripts/deploy.sh PROD_GATEWAY "${DEPLOY_CONFIG_FILE}"
+
+  deploy-prod:
+    name: Deploy to PROD
+    runs-on: ubuntu-latest
+    needs: deploy-prod-gateway
+    env:
+      DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
+    concurrency:
+      group: prod
+      cancel-in-progress: false
+    environment:
+      name: PROD
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment config
+        run: |
+          echo "Using deploy config: ${DEPLOY_CONFIG_FILE}"
+          if [[ ! -f "${DEPLOY_CONFIG_FILE}" ]]; then
+            echo "Config file not found: ${DEPLOY_CONFIG_FILE}"
+            exit 1
+          fi
+          jq empty "${DEPLOY_CONFIG_FILE}"
+
+      - name: Build/Test (placeholder)
+        run: |
+          echo "Running build and tests..."
+          # Replace with real commands.
+
+      - name: Deploy to PROD
+        run: |
+          bash ./scripts/deploy.sh PROD "${DEPLOY_CONFIG_FILE}"
