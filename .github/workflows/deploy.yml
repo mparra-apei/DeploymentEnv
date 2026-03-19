@@ -50,4 +50,7 @@ jobs:
       - name: Deploy using config order
         run: |
           echo "Deploy selector: ${ENV_SELECTOR}"
-          bash ./scripts/deploy.sh "${ENV_SELECTOR}" "${DEPLOY_CONFIG_FILE}"
+          echo "Config file path: ${DEPLOY_CONFIG_FILE}"
+          echo "Current directory: $(pwd)"
+          echo "Files in scripts/: $(ls -la ./scripts/ || echo 'scripts/ not found')"
+          bash -x ./scripts/deploy.sh "${ENV_SELECTOR}" "${DEPLOY_CONFIG_FILE}"
