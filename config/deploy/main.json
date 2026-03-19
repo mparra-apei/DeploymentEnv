@@ -1,4 +1,4 @@
 {
   "processID": "abc1234",
-  "environments": ["STAGE", "OPSFIX", "PROD_GATEWAY","PROD"]
+  "environments": ["STAGE"]
 }
