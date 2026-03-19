@@ -8,11 +8,6 @@ on:
         required: false
         default: "config/deploy/main.json"
         type: string
-      environment_selector:
-        description: "Comma-separated environments (e.g., STAGE,PROD) or 'all' for full sequence"
-        required: false
-        default: "all"
-        type: string
   push:
     branches:
       - main
@@ -21,10 +16,35 @@ permissions:
   contents: read
 
 jobs:
+  setup:
+    name: Setup - Read environments from config
+    runs-on: ubuntu-latest
+    outputs:
+      has_stage: ${{ steps.check.outputs.has_stage }}
+      has_opsfix: ${{ steps.check.outputs.has_opsfix }}
+      has_prod_gateway: ${{ steps.check.outputs.has_prod_gateway }}
+      has_prod: ${{ steps.check.outputs.has_prod }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check environments
+        id: check
+        env:
+          CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
+        run: |
+          echo "has_stage=$(jq '.environments | map(select(. == "STAGE")) | length > 0' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+          echo "has_opsfix=$(jq '.environments | map(select(. == "OPSFIX")) | length > 0' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+          echo "has_prod_gateway=$(jq '.environments | map(select(. == "PROD_GATEWAY")) | length > 0' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+          echo "has_prod=$(jq '.environments | map(select(. == "PROD")) | length > 0' "$CONFIG_FILE")" >> $GITHUB_OUTPUT
+          echo "Configured environments:"
+          jq '.environments' "$CONFIG_FILE"
+
   deploy-stage:
     name: Deploy to STAGE
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || contains(inputs.environment_selector, 'all') || contains(inputs.environment_selector, 'STAGE')
+    needs: setup
+    if: needs.setup.outputs.has_stage == 'true'
     env:
       DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
     environment:
@@ -55,7 +75,7 @@ jobs:
     name: Deploy to OPSFIX
     runs-on: ubuntu-latest
     needs: deploy-stage
-    if: github.event_name == 'push' || contains(inputs.environment_selector, 'all') || contains(inputs.environment_selector, 'OPSFIX')
+    if: needs.setup.outputs.has_opsfix == 'true'
     env:
       DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
     environment:
@@ -86,7 +106,7 @@ jobs:
     name: Deploy to PROD_GATEWAY
     runs-on: ubuntu-latest
     needs: deploy-opsfix
-    if: github.event_name == 'push' || contains(inputs.environment_selector, 'all') || contains(inputs.environment_selector, 'PROD_GATEWAY')
+    if: needs.setup.outputs.has_prod_gateway == 'true'
     env:
       DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
     environment:
@@ -117,7 +137,7 @@ jobs:
     name: Deploy to PROD
     runs-on: ubuntu-latest
     needs: deploy-prod-gateway
-    if: github.event_name == 'push' || contains(inputs.environment_selector, 'all') || contains(inputs.environment_selector, 'PROD')
+    if: needs.setup.outputs.has_prod == 'true'
     env:
       DEPLOY_CONFIG_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.json_file || 'config/deploy/main.json' }}
     concurrency:
