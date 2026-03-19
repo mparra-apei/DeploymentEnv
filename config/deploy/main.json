@@ -1,5 +1,4 @@
 {
-  "appName": "abc123",
-  "artifact": "stg, devp",
-  "targetRegion": "us-east-1"
+  "processID": "abc123",
+  "environments": "stg, devp"
 }
